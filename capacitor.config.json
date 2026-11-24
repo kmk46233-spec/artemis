@@ -1,0 +1,9 @@
+{
+  "appId": "com.ghabat.focus",
+  "appName": "غابة التركيز",
+  "webDir": "www",
+  "backgroundColor": "#0a5a4e",
+  "android": {
+    "backgroundColor": "#0a5a4e"
+  }
+}

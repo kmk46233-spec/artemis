@@ -1,0 +1,650 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a5a4e">
+<title>غابة التركيز</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@200;300;500;600&family=Tajawal:wght@400;500;700&display=swap">
+<style>
+/* Layout: one calm green world. Glass dome with a growing tree in the middle, big thin clock below, white pill button at the bottom. Other screens reuse the same ground with darker translucent cards. */
+:root{
+  --font-ui:'Tajawal','Segoe UI',Tahoma,system-ui,sans-serif;
+  --font-num:'Readex Pro','Tajawal','Segoe UI',system-ui,sans-serif;
+  --bg:#0c5f52; --bg-top:#1c7a5f; --bg-bot:#0a5a4e;
+  --fg:#ffffff; --muted:#dff3ea; --line:rgba(255,255,255,.28);
+  --surface:rgba(2,40,33,.28); --surface-2:rgba(255,255,255,.18);
+  --cta-bg:#ffffff; --cta-fg:#0a4a3e; --danger:#c43a2c;
+  --sheet:#146b55; --scrim:rgba(2,26,22,.7); --nav-bg:rgba(7,66,55,.88);
+  --grass-top:#7ad06f; --grass-side:#58a85a; --soil:#8d675b;
+  --dome-in:rgba(255,255,255,.04); --dome-out:rgba(214,255,232,.5);
+  box-sizing:border-box;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#061517; --bg-top:#0e3228; --bg-bot:#061517;
+    --muted:#bfdccf; --line:rgba(255,255,255,.16);
+    --surface:rgba(255,255,255,.07); --surface-2:rgba(255,255,255,.12);
+    --cta-bg:#e6f6ee; --cta-fg:#093a30;
+    --sheet:#0d2a24; --scrim:rgba(0,10,10,.78); --nav-bg:rgba(5,20,20,.9);
+    --grass-top:#5fb85a; --grass-side:#47914a; --soil:#6e4f46;
+    --dome-in:rgba(255,255,255,.02); --dome-out:rgba(120,235,185,.24);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#061517; --bg-top:#0e3228; --bg-bot:#061517;
+  --muted:#bfdccf; --line:rgba(255,255,255,.16);
+  --surface:rgba(255,255,255,.07); --surface-2:rgba(255,255,255,.12);
+  --cta-bg:#e6f6ee; --cta-fg:#093a30;
+  --sheet:#0d2a24; --scrim:rgba(0,10,10,.78); --nav-bg:rgba(5,20,20,.9);
+  --grass-top:#5fb85a; --grass-side:#47914a; --soil:#6e4f46;
+  --dome-in:rgba(255,255,255,.02); --dome-out:rgba(120,235,185,.24);
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{
+  margin:0; font-family:var(--font-ui); font-size:16px; line-height:1.5;
+  color:var(--fg); background-color:var(--bg);
+  background-image:linear-gradient(180deg,var(--bg-top),var(--bg-bot));
+  background-attachment:fixed; -webkit-tap-highlight-color:transparent;
+}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid #fff;outline-offset:3px}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+.app{
+  min-height:100%; display:flex; flex-direction:column; gap:8px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:12px calc(84px + env(safe-area-inset-bottom,0px));
+}
+body.focusing .app{padding-block-end:24px}
+main{flex:1;display:flex;flex-direction:column;width:100%;max-width:560px;margin-inline:auto;min-width:0}
+.view{flex:1;display:flex;flex-direction:column;gap:16px;min-width:0}
+
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;width:100%;max-width:560px;margin-inline:auto}
+.brand{display:flex;align-items:center;gap:8px;margin:0;font:600 17px/1 var(--font-num)}
+.coins{display:inline-flex;align-items:center;gap:6px;padding:6px 14px 6px 10px;border-radius:999px;background:var(--surface);font:500 16px/1 var(--font-num);font-variant-numeric:tabular-nums}
+.ic{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.ic-coin{width:22px;height:22px;flex:none}
+.ic-sm{width:18px;height:18px;flex:none;vertical-align:-4px}
+
+h1{margin:0;font:600 26px/1.3 var(--font-num)}
+.lead{margin:0;color:var(--muted);font-size:15px}
+
+/* focus view */
+.meta{display:grid;gap:6px}
+.tags{display:flex;gap:8px;overflow-x:auto;padding-block:2px;scrollbar-width:none}
+.tags::-webkit-scrollbar{display:none}
+.chip{flex:none;min-height:40px;padding:0 18px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--fg);font-size:15px}
+.chip[aria-checked="true"]{background:var(--cta-bg);color:var(--cta-fg);border-color:transparent;font-weight:500}
+.field{width:100%;height:44px;padding:0 4px;background:transparent;border:0;border-bottom:1px solid var(--line);border-radius:0;color:var(--fg);font-size:16px}
+.field::placeholder{color:var(--muted);opacity:1}
+.sessionline{margin:0;text-align:center;color:var(--muted);font-size:15px}
+.stage{flex:1;min-height:0;display:grid;place-items:center;padding-block:4px}
+.dome{width:min(72vw,38vh,330px);max-width:100%;aspect-ratio:1;height:auto;overflow:visible}
+.ring{opacity:0;transition:opacity .4s}
+body.focusing .ring{opacity:1}
+.clock{display:flex;align-items:center;justify-content:center;gap:12px;direction:ltr}
+.time{font:200 clamp(52px,15vw,84px)/1 var(--font-num);letter-spacing:.02em;font-variant-numeric:tabular-nums;text-align:center}
+.step{width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--fg);font-size:26px;line-height:1;display:grid;place-items:center;padding:0}
+body.focusing .step{visibility:hidden}
+.hint{margin:0;min-height:3em;text-align:center;color:var(--muted);font-size:14px}
+.cta{display:grid;place-items:center;height:56px;width:min(100%,320px);margin-inline:auto;border:0;border-radius:999px;background:var(--cta-bg);color:var(--cta-fg);font:500 18px/1 var(--font-ui);text-decoration:none}
+.cta:active,.btn:active{transform:scale(.98)}
+.cta.ghost{background:transparent;color:var(--fg);border:1.5px solid var(--fg)}
+.cta.danger{background:var(--danger);color:#fff;border:0}
+
+/* forest */
+.day h2{margin:8px 0;font:500 14px/1.4 var(--font-ui);color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
+.tile{margin:0;padding:8px 4px 10px;border-radius:16px;background:var(--surface);text-align:center;min-width:0}
+.tile svg{display:block;width:100%;height:auto;aspect-ratio:1}
+.tile b{display:block;font:500 14px/1.4 var(--font-num)}
+.tile span{display:block;font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tile.dead b{color:var(--muted)}
+.empty{display:grid;justify-items:center;gap:12px;padding:24px 8px;text-align:center;color:var(--muted)}
+.empty svg{width:150px;height:150px}
+.empty h2{margin:0;font:600 20px/1.3 var(--font-num);color:var(--fg)}
+.empty p{margin:0}
+
+/* shop */
+.shop{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.card{display:grid;gap:8px;padding:12px;border-radius:20px;background:var(--surface);min-width:0}
+.card.sel{outline:2px solid var(--fg);outline-offset:-2px}
+.card svg{display:block;width:100%;height:auto;aspect-ratio:1}
+.card h3{margin:0;font:500 17px/1.3 var(--font-num);text-align:center}
+.btn{height:44px;width:100%;border:0;border-radius:999px;background:var(--cta-bg);color:var(--cta-fg);font:500 15px/1 var(--font-ui);display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn:disabled{background:transparent;color:var(--muted);border:1px solid var(--line);cursor:default}
+.btn:disabled:active{transform:none}
+
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.stat{padding:14px;border-radius:18px;background:var(--surface);min-width:0}
+.stat b{display:block;font:500 24px/1.3 var(--font-num);font-variant-numeric:tabular-nums}
+.stat span{font-size:14px;color:var(--muted)}
+.panel{padding:16px 12px 12px;border-radius:20px;background:var(--surface)}
+.panel h2{margin:0 4px 12px;font:500 15px/1.4 var(--font-ui);color:var(--muted)}
+.bars{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;align-items:end}
+.col{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;min-width:0}
+.col .val{font:500 12px/1 var(--font-num);min-height:12px;font-variant-numeric:tabular-nums}
+.col .bar{width:100%;max-width:26px;border-radius:8px 8px 3px 3px;background:var(--fg)}
+.col .bar.zero{opacity:.35}
+.col .day{font-size:12px;line-height:1.2;color:var(--muted);white-space:nowrap}
+.col .day.now{color:var(--fg);font-weight:700}
+.rows{display:grid;gap:12px}
+.row{display:grid;grid-template-columns:64px minmax(0,1fr) auto;gap:10px;align-items:center;font-size:14px}
+.track{height:10px;border-radius:99px;background:var(--surface-2);overflow:hidden}
+.fill{height:100%;border-radius:99px;background:var(--fg)}
+.row em{font:500 13px/1 var(--font-num);font-style:normal;font-variant-numeric:tabular-nums}
+.note{margin:0;color:var(--muted);font-size:14px}
+
+/* nav */
+.nav{
+  position:fixed;left:0;right:0;bottom:0;z-index:5;display:flex;justify-content:center;
+  padding:8px max(16px,env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
+  background:var(--nav-bg);border-top:1px solid var(--line);
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+}
+body.focusing .nav{display:none}
+.nav-in{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;width:100%;max-width:560px}
+.tab{display:grid;justify-items:center;align-content:center;gap:2px;min-height:48px;padding:4px;border-radius:14px;color:var(--muted);text-decoration:none;font-size:12px}
+.tab[aria-current="page"]{background:var(--surface-2);color:var(--fg);font-weight:700}
+
+/* result sheet */
+.overlay{
+  position:fixed;left:0;right:0;top:0;bottom:0;z-index:20;display:grid;place-items:center;background:var(--scrim);
+  padding:env(safe-area-inset-top,0px) max(16px,env(safe-area-inset-right,0px)) env(safe-area-inset-bottom,0px) max(16px,env(safe-area-inset-left,0px));
+  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
+}
+.sheet{width:min(100%,360px);display:grid;justify-items:center;gap:10px;padding:24px 20px;border-radius:28px;background:var(--sheet);text-align:center}
+.sheet svg.res{width:170px;height:170px}
+.sheet h2{margin:0;font:600 24px/1.3 var(--font-num)}
+.sheet p{margin:0;color:var(--muted)}
+.gain{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:999px;background:var(--surface-2);font:500 17px/1 var(--font-ui)}
+.sheet .cta{margin-top:6px}
+.sheet .link{background:none;border:0;color:var(--fg);text-decoration:underline;text-underline-offset:4px;min-height:44px;font-size:15px}
+
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:30;max-width:calc(100% - 32px);padding:10px 18px;border-radius:999px;background:var(--cta-bg);color:var(--cta-fg);font-size:14px;text-align:center}
+
+@media (prefers-reduced-motion:no-preference){
+  .dome{animation:float 7s ease-in-out infinite}
+  @keyframes float{50%{transform:translateY(-6px)}}
+  .overlay{animation:fade .25s ease-out}
+  @keyframes fade{from{opacity:0}}
+}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-timer" viewBox="0 0 24 24"><circle cx="12" cy="13.5" r="7.5"/><path d="M12 9.5v4l2.5 1.8M9.5 3h5"/></symbol>
+    <symbol id="i-tree" viewBox="0 0 24 24"><path d="M12 3l5 7h-3l4 6H6l4-6H7z"/><path d="M12 16v5"/></symbol>
+    <symbol id="i-bag" viewBox="0 0 24 24"><path d="M5 8h14l-1 12H6L5 8z"/><path d="M9 8V6a3 3 0 016 0v2"/></symbol>
+    <symbol id="i-bars" viewBox="0 0 24 24"><path d="M5 20v-9M12 20V4M19 20v-6"/></symbol>
+    <symbol id="i-coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10.5" fill="#f2b32c" stroke="none"/><circle cx="12" cy="12" r="8" fill="#ffd66b" stroke="none"/><path d="M14.2 7.6c-3.2.2-4.9 2.4-4.2 4.8.6 1.9 2.6 2.5 3.8 1.5" fill="none" stroke="#c98616" stroke-width="1.7" stroke-linecap="round"/></symbol>
+  </defs>
+</svg>
+
+<div class="app" id="app" dir="rtl" lang="ar">
+  <header class="top">
+    <p class="brand"><svg class="ic" aria-hidden="true"><use href="#i-tree"/></svg>غابة التركيز</p>
+    <div class="coins" role="status" aria-label="رصيد العملات"><svg class="ic-coin" aria-hidden="true"><use href="#i-coin"/></svg><span id="coinCount">0</span></div>
+  </header>
+
+  <main>
+    <section class="view" id="v-focus" aria-labelledby="h-focus">
+      <h1 class="sr-only" id="h-focus">جلسة تركيز</h1>
+      <div class="meta" id="meta">
+        <div class="tags" id="tags" role="radiogroup" aria-label="اختر علامة"></div>
+        <input class="field" id="title" type="text" maxlength="40" placeholder="إضافة عنوان للجلسة..." autocomplete="off" aria-label="عنوان الجلسة">
+      </div>
+      <p class="sessionline" id="sessionLine" hidden></p>
+      <div class="stage">
+        <svg class="dome" id="dome" viewBox="0 0 320 320" role="img" aria-label="شجرة تنمو داخل كرة زجاجية">
+          <defs>
+            <radialGradient id="dg" cx="50%" cy="46%" r="52%">
+              <stop offset="0.55" style="stop-color:var(--dome-in)"/>
+              <stop offset="1" style="stop-color:var(--dome-out)"/>
+            </radialGradient>
+          </defs>
+          <circle cx="160" cy="160" r="150" fill="url(#dg)" stroke="rgba(255,255,255,.35)" stroke-width="1.5"/>
+          <ellipse cx="238" cy="64" rx="26" ry="13" transform="rotate(35 238 64)" fill="rgba(255,255,255,.26)"/>
+          <g class="ring" fill="none" stroke-width="3">
+            <circle cx="160" cy="160" r="156" stroke="rgba(255,255,255,.18)"/>
+            <circle id="ringP" cx="160" cy="160" r="156" pathLength="100" stroke="#fff" stroke-linecap="round" stroke-dasharray="0 100" transform="rotate(-90 160 160)"/>
+          </g>
+          <path d="M62 214C64 262 120 282 160 284C200 282 256 262 258 214Z" style="fill:var(--soil)"/>
+          <path d="M62 214C66 240 120 253 160 253C200 253 254 240 258 214Z" style="fill:var(--grass-side)"/>
+          <ellipse cx="160" cy="214" rx="98" ry="26" style="fill:var(--grass-top)"/>
+          <g id="treeG" transform="translate(160 216) scale(1.05) translate(-100 -170)"></g>
+        </svg>
+      </div>
+      <div class="clock">
+        <button class="step" id="minus" type="button" aria-label="تقليل المدة 5 دقائق">−</button>
+        <div class="time" id="time" dir="ltr" aria-live="off">25:00</div>
+        <button class="step" id="plus" type="button" aria-label="زيادة المدة 5 دقائق">+</button>
+      </div>
+      <p class="hint" id="hint"></p>
+      <button class="cta" id="go" type="button">ابدأ التركيز</button>
+    </section>
+
+    <section class="view" id="v-forest" aria-labelledby="h-forest" hidden>
+      <div>
+        <h1 id="h-forest">غابتي</h1>
+        <p class="lead" id="forestSum"></p>
+      </div>
+      <div id="forestBody"></div>
+    </section>
+
+    <section class="view" id="v-shop" aria-labelledby="h-shop" hidden>
+      <div>
+        <h1 id="h-shop">المتجر</h1>
+        <p class="lead">اشترِ أنواعًا جديدة من الأشجار بعملاتك. كل 5 دقائق تركيز تمنحك عملة.</p>
+      </div>
+      <div class="shop" id="shopGrid"></div>
+    </section>
+
+    <section class="view" id="v-stats" aria-labelledby="h-stats" hidden>
+      <h1 id="h-stats">الإحصائيات</h1>
+      <div id="statsBody" style="display:grid;gap:16px"></div>
+    </section>
+  </main>
+</div>
+
+<nav class="nav" aria-label="التنقل الرئيسي" dir="rtl">
+  <div class="nav-in">
+    <a class="tab" href="#focus" data-v="focus"><svg class="ic" aria-hidden="true"><use href="#i-timer"/></svg>التركيز</a>
+    <a class="tab" href="#forest" data-v="forest"><svg class="ic" aria-hidden="true"><use href="#i-tree"/></svg>الغابة</a>
+    <a class="tab" href="#shop" data-v="shop"><svg class="ic" aria-hidden="true"><use href="#i-bag"/></svg>المتجر</a>
+    <a class="tab" href="#stats" data-v="stats"><svg class="ic" aria-hidden="true"><use href="#i-bars"/></svg>الإحصائيات</a>
+  </div>
+</nav>
+
+<div class="overlay" id="result" role="dialog" aria-modal="true" aria-labelledby="resTitle" dir="rtl" lang="ar" hidden>
+  <div class="sheet">
+    <svg class="res" id="resTree" viewBox="20 20 160 160" aria-hidden="true"></svg>
+    <h2 id="resTitle"></h2>
+    <p id="resText"></p>
+    <div class="gain" id="resGain" hidden><svg class="ic-coin" aria-hidden="true"><use href="#i-coin"/></svg><span id="resGainText"></span></div>
+    <button class="cta" id="resNew" type="button">جلسة جديدة</button>
+    <button class="link" id="resForest" type="button">عرض الغابة</button>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" dir="rtl" lang="ar" hidden></div>
+
+<script>
+(function(){
+'use strict';
+var GRACE=10000;
+var SPECIES=[{id:'pine',name:'صنوبر',price:0},{id:'palm',name:'نخلة',price:15},{id:'oak',name:'بلوط',price:25},{id:'cherry',name:'كرز',price:40}];
+var TAGS=['عام','دراسة','عمل','قراءة','رياضة'];
+var VIEWS=['focus','forest','shop','stats'];
+var KEY='ghabat-focus-v1', AKEY='ghabat-focus-active';
+var PAL={oak:{trunk:'#7b5a45',c1:'#3b8f4a',c2:'#4fa85a',c3:'#6cc46a'},cherry:{trunk:'#6f4b44',c1:'#e58aa8',c2:'#f0a6bd',c3:'#f8c8d6',dots:true}};
+
+function $(id){return document.getElementById(id);}
+function clamp(v,a,b){return Math.min(b,Math.max(a,v));}
+function f(n){return Math.round(n*10)/10;}
+function p2(n){return String(n).padStart(2,'0');}
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function coinWord(n){return n===1?'عملة واحدة':n===2?'عملتان':(n>=3&&n<=10?n+' عملات':n+' عملة');}
+function fmtMin(m){return m<60?m+' د':Math.floor(m/60)+' س'+(m%60?' '+(m%60)+' د':'');}
+
+/* ---------- trees (coordinates: 200x200, ground at y=170) ---------- */
+function sprout(g){
+  var sp=clamp(g/0.1,0,1), op=g<0.2?1:clamp(1-(g-0.2)/0.08,0,1);
+  if(sp<=0||op<=0) return '';
+  return '<g opacity="'+f(op)+'" transform="translate(100 170) scale('+f(sp)+') translate(-100 -170)">'+
+    '<path d="M100 170C100 160 101 150 100 140" stroke="#5aa84f" stroke-width="4" stroke-linecap="round" fill="none"/>'+
+    '<path d="M100 146C88 146 78 138 76 128C88 126 98 132 100 146Z" fill="#6cc46a"/>'+
+    '<path d="M100 142C112 142 122 134 124 124C112 122 102 128 100 142Z" fill="#7ed67a"/></g>';
+}
+function pine(k){
+  var th=36*clamp(k*3,0,1);
+  var o='<rect x="95" y="'+f(170-th)+'" width="10" height="'+f(th)+'" rx="2" fill="#7b5a45"/>';
+  var T=[[150,112,40,'#3c9444'],[128,88,34,'#48a64e'],[106,64,28,'#55b559'],[84,36,22,'#63c466']];
+  T.forEach(function(t,i){
+    var p=clamp((k-i*0.2)/0.28,0,1); if(p<=0) return;
+    var b=t[0],top=t[1],h=t[2],c=t[3];
+    o+='<g transform="translate(100 '+b+') scale('+f(p)+') translate(-100 '+(-b)+')">'+
+      '<path d="M100 '+top+' L'+(100+h)+' '+b+' Q100 '+(b+10)+' '+(100-h)+' '+b+'Z" fill="'+c+'"/>'+
+      '<path d="M100 '+top+' L'+(100+h)+' '+b+' Q'+(100+h/2)+' '+(b+9)+' 100 '+(b+8)+'Z" fill="#fff" opacity=".12"/></g>';
+  });
+  return o;
+}
+function frond(tx,ty,a,L,kf,col){
+  var r=a*Math.PI/180,c=Math.cos(r),s=Math.sin(r);
+  var ex=tx+L*c,ey=ty-0.45*L*s+20*kf*Math.abs(c);
+  var cx=tx+0.55*L*c,cy=ty-0.62*L*s-8*kf,w=8*kf;
+  return '<path d="M'+f(tx)+' '+f(ty)+' Q'+f(cx)+' '+f(cy-w)+' '+f(ex)+' '+f(ey)+' Q'+f(cx)+' '+f(cy+w)+' '+f(tx)+' '+f(ty)+'Z" fill="'+col+'"/>';
+}
+function palm(k){
+  var H=(16+78*k)*clamp(k*8,0,1), tx=100+12*k, ty=170-H;
+  var d='M100 170 Q'+f(100-8*k)+' '+f(170-H*0.55)+' '+f(tx)+' '+f(ty);
+  var o='<path d="'+d+'" fill="none" stroke="#8a6a4d" stroke-width="9"/><path d="'+d+'" fill="none" stroke="#6b4f38" stroke-width="9" stroke-dasharray="2 8"/>';
+  var kf=clamp((k-0.15)/0.85,0,1);
+  if(kf>0){
+    [8,35,62,90,118,145,172].forEach(function(a,i){o+=frond(tx,ty,a,50*kf,kf,i%2?'#3d9d4c':'#2f8a40');});
+    var dop=clamp((k-0.9)/0.1,0,1);
+    if(dop>0) o+='<g opacity="'+f(dop)+'" fill="#d9822b"><circle cx="'+f(tx-5)+'" cy="'+f(ty+6)+'" r="3.5"/><circle cx="'+f(tx+4)+'" cy="'+f(ty+8)+'" r="3.5"/><circle cx="'+f(tx)+'" cy="'+f(ty+12)+'" r="3.5"/></g>';
+  }
+  return o;
+}
+function round(k,P){
+  var th=(14+56*clamp(k*1.5,0,1))*clamp(k*8,0,1), ty=170-th;
+  var o='<path d="M92 170 Q98 '+f(170-th*0.45)+' 96 '+f(ty)+' L104 '+f(ty)+' Q102 '+f(170-th*0.45)+' 108 170Z" fill="'+P.trunk+'"/>';
+  var r=clamp((k-0.12)/0.88,0,1);
+  if(r>0){
+    o+='<g transform="translate(100 '+f(ty-12)+') scale('+f(r)+')">';
+    [[-28,12,25,P.c1],[28,12,25,P.c1],[0,-2,34,P.c1],[-17,-26,23,P.c1],[18,-24,21,P.c1],[-10,-8,22,P.c2],[14,-20,15,P.c3],[-26,8,12,P.c2]].forEach(function(c){
+      o+='<circle cx="'+c[0]+'" cy="'+c[1]+'" r="'+c[2]+'" fill="'+c[3]+'"/>';
+    });
+    var dop=clamp((r-0.6)/0.4,0,1);
+    if(P.dots&&dop>0){
+      o+='<g opacity="'+f(dop)+'" fill="#fff0f5">';
+      [[-20,0],[10,-12],[24,8],[-6,16],[0,-30],[-26,-18],[22,-28]].forEach(function(d){o+='<circle cx="'+d[0]+'" cy="'+d[1]+'" r="3"/>';});
+      o+='</g>';
+    }
+    o+='</g>';
+  }
+  return o;
+}
+function deadTree(){
+  return '<path d="M96 170L98 108L104 108L106 170Z" fill="#6e5a4f"/>'+
+    '<g stroke="#6e5a4f" stroke-linecap="round" fill="none"><path d="M101 132L78 104" stroke-width="4"/><path d="M78 104L66 96" stroke-width="3"/><path d="M102 120L126 92" stroke-width="4"/><path d="M126 92L136 89" stroke-width="3"/><path d="M101 112L100 86" stroke-width="3.5"/></g>'+
+    '<g fill="#a0763d" opacity=".85"><ellipse cx="66" cy="99" rx="3" ry="5" transform="rotate(30 66 99)"/><ellipse cx="137" cy="93" rx="3" ry="5" transform="rotate(-30 137 93)"/><ellipse cx="80" cy="168" rx="7" ry="3" transform="rotate(-15 80 168)"/><ellipse cx="122" cy="169" rx="7" ry="3" transform="rotate(12 122 169)"/><ellipse cx="108" cy="172" rx="6" ry="2.5"/></g>';
+}
+function treeMarkup(sp,g,dead){
+  if(dead) return '<ellipse cx="100" cy="171" rx="34" ry="5" fill="#000" opacity=".16"/>'+deadTree();
+  var k=clamp((g-0.2)/0.8,0,1);
+  var o='<ellipse cx="100" cy="171" rx="'+f(10+24*clamp(g*3,0,1))+'" ry="5" fill="#000" opacity=".16"/>'+sprout(g);
+  if(k>0){o+=sp==='palm'?palm(k):sp==='oak'?round(k,PAL.oak):sp==='cherry'?round(k,PAL.cherry):pine(k);}
+  return o;
+}
+
+/* ---------- state ---------- */
+function defaults(){return {coins:0,selected:'pine',owned:['pine'],tag:'عام',dur:25,sessions:[]};}
+function load(){
+  var s=defaults();
+  try{
+    var raw=JSON.parse(localStorage.getItem(KEY));
+    if(raw&&typeof raw==='object'){
+      if(typeof raw.coins==='number') s.coins=Math.max(0,Math.floor(raw.coins));
+      if(Array.isArray(raw.owned)&&raw.owned.length) s.owned=raw.owned;
+      if(SPECIES.some(function(x){return x.id===raw.selected;})&&s.owned.indexOf(raw.selected)>-1) s.selected=raw.selected;
+      if(typeof raw.tag==='string') s.tag=raw.tag;
+      if(typeof raw.dur==='number') s.dur=clamp(Math.round(raw.dur/5)*5,5,120);
+      if(Array.isArray(raw.sessions)) s.sessions=raw.sessions;
+    }
+  }catch(e){}
+  return s;
+}
+var S=load();
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+var A=null, timer=null, lastSec=-1, confirmGive=false, confirmT=null, toastT=null, wl=null, ac=null, hiddenAt=0;
+function saveActive(){try{localStorage.setItem(AKEY,JSON.stringify(A));}catch(e){}}
+function clearActive(){try{localStorage.removeItem(AKEY);}catch(e){}}
+
+/* ---------- elements ---------- */
+var treeG=$('treeG'), ringP=$('ringP'), timeEl=$('time'), goBtn=$('go'), hintEl=$('hint'), titleEl=$('title'), tagsEl=$('tags'), lineEl=$('sessionLine');
+
+/* ---------- audio, wake lock ---------- */
+function ensureAudio(){
+  try{
+    if(!ac){var C=window.AudioContext||window.webkitAudioContext; if(C) ac=new C();}
+    if(ac&&ac.state==='suspended') ac.resume();
+  }catch(e){}
+}
+function tone(freqs){
+  try{
+    if(!ac) return;
+    var t0=ac.currentTime;
+    freqs.forEach(function(fr,i){
+      var o=ac.createOscillator(),g=ac.createGain(),t=t0+i*0.18;
+      o.type='sine'; o.frequency.value=fr;
+      g.gain.setValueAtTime(0.0001,t);
+      g.gain.exponentialRampToValueAtTime(0.18,t+0.03);
+      g.gain.exponentialRampToValueAtTime(0.0001,t+0.7);
+      o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t+0.75);
+    });
+  }catch(e){}
+}
+function lock(){
+  try{
+    if('wakeLock' in navigator&&document.visibilityState==='visible'){
+      navigator.wakeLock.request('screen').then(function(l){wl=l;l.addEventListener('release',function(){wl=null;});}).catch(function(){});
+    }
+  }catch(e){}
+}
+function unlock(){try{if(wl){wl.release();wl=null;}}catch(e){}}
+
+/* ---------- focus screen ---------- */
+function paintTime(sec){timeEl.textContent=p2(Math.floor(sec/60))+':'+p2(sec%60);}
+function renderDome(g){
+  var sp=A?A.species:S.selected;
+  treeG.innerHTML=treeMarkup(sp,g,false);
+  ringP.setAttribute('stroke-dasharray',(A?f(g*100):0)+' 100');
+}
+function renderTags(){
+  tagsEl.innerHTML=TAGS.map(function(t){
+    return '<button type="button" class="chip" role="radio" aria-checked="'+(t===S.tag)+'" data-tag="'+esc(t)+'">'+esc(t)+'</button>';
+  }).join('');
+}
+function ui(){
+  document.body.classList.toggle('focusing',!!A);
+  goBtn.textContent=A?(confirmGive?'تأكيد الاستسلام':'استسلام'):'ابدأ التركيز';
+  goBtn.className='cta'+(A?(confirmGive?' danger':' ghost'):'');
+  if(!A){
+    paintTime(S.dur*60); renderDome(1);
+    hintEl.textContent='ستكسب '+coinWord(Math.floor(S.dur/5))+' عند إنهاء الجلسة.';
+    lineEl.hidden=true;
+  }else{
+    hintEl.textContent=confirmGive?'ستموت الشجرة إن استسلمت الآن. اضغط مرة أخرى للتأكيد.':'ابقَ في هذه الصفحة. إن غادرتها أكثر من 10 ثوانٍ ستذبل الشجرة.';
+    lineEl.textContent=A.tag+(A.title?' · '+A.title:'');
+    lineEl.hidden=false;
+  }
+}
+function tick(){
+  if(!A||document.hidden||hiddenAt) return;
+  var now=Date.now(), el=now-A.start;
+  if(el>=A.total){finish(true);return;}
+  var sec=Math.ceil((A.total-el)/1000);
+  if(sec!==lastSec){
+    lastSec=sec; A.lastSeen=now; saveActive();
+    paintTime(sec); renderDome(el/A.total);
+  }
+}
+function start(){
+  ensureAudio();
+  var now=Date.now();
+  A={start:now,total:S.dur*60000,species:S.selected,tag:S.tag,title:titleEl.value.trim().slice(0,40),lastSeen:now};
+  saveActive(); lastSec=-1; confirmGive=false; hiddenAt=0;
+  lock(); show(); timer=setInterval(tick,250); tick(); ui();
+}
+function cancelQuiet(){
+  clearInterval(timer); timer=null; unlock(); A=null; clearActive(); confirmGive=false; hiddenAt=0;
+  ui(); show(); toast('أُلغيت الجلسة ولم تذبل أي شجرة.');
+}
+function finish(ok,reason){
+  if(!A) return;
+  clearInterval(timer); timer=null; unlock(); clearTimeout(confirmT); confirmGive=false; hiddenAt=0;
+  var s=A; A=null; clearActive();
+  var rec={id:s.start,t:Date.now(),min:Math.round(s.total/60000),ok:ok,species:s.species,tag:s.tag,title:s.title,reason:reason||''};
+  var gain=ok?Math.floor(rec.min/5):0;
+  S.coins+=gain; S.sessions.push(rec);
+  if(S.sessions.length>400) S.sessions=S.sessions.slice(-400);
+  save(); titleEl.value='';
+  renderAll(); ui(); show(); showResult(rec,gain);
+  tone(ok?[659.25,783.99,1046.5]:[220,174.6]);
+}
+function showResult(rec,gain){
+  $('resTree').innerHTML=treeMarkup(rec.species,1,!rec.ok);
+  var extra=rec.title?' في «'+rec.title+'»':'';
+  if(rec.ok){
+    $('resTitle').textContent='نمت شجرتك!';
+    $('resText').textContent='ركّزت '+rec.min+' دقيقة'+extra+'.';
+  }else{
+    $('resTitle').textContent='ذبلت الشجرة';
+    $('resText').textContent=rec.reason==='gaveup'?'استسلمت قبل نهاية الجلسة.':'غادرت الصفحة أكثر من 10 ثوانٍ.';
+  }
+  $('resGain').hidden=!(gain>0);
+  if(gain>0) $('resGainText').textContent='+ '+coinWord(gain);
+  $('result').hidden=false;
+  $('resNew').focus();
+}
+function toast(msg){
+  var t=$('toast'); t.textContent=msg; t.hidden=false;
+  clearTimeout(toastT); toastT=setTimeout(function(){t.hidden=true;},2600);
+}
+
+/* ---------- other screens ---------- */
+function startOfDay(t){var d=new Date(t);d.setHours(0,0,0,0);return d.getTime();}
+function dayLabel(t){
+  var diff=Math.round((startOfDay(Date.now())-startOfDay(t))/86400000);
+  if(diff===0) return 'اليوم';
+  if(diff===1) return 'أمس';
+  try{return new Date(t).toLocaleDateString('ar-EG-u-nu-latn',{weekday:'long',day:'numeric',month:'long'});}
+  catch(e){return new Date(t).toLocaleDateString();}
+}
+function renderForest(){
+  var list=S.sessions.slice().sort(function(a,b){return b.t-a.t;});
+  var okList=list.filter(function(s){return s.ok;});
+  var mins=okList.reduce(function(n,s){return n+s.min;},0);
+  $('forestSum').textContent=list.length?(okList.length+' شجرة نمت · '+fmtMin(mins)+' تركيز'):'';
+  var body=$('forestBody');
+  if(!list.length){
+    body.innerHTML='<div class="empty"><svg viewBox="20 20 160 160" aria-hidden="true">'+treeMarkup('pine',1,false)+'</svg><h2>غابتك فارغة</h2><p>كل جلسة تركيز تكتمل تزرع شجرة هنا.</p><a class="cta" href="#focus">ابدأ أول جلسة</a></div>';
+    return;
+  }
+  var html='',cur='';
+  list.forEach(function(s){
+    var key=String(startOfDay(s.t));
+    if(key!==cur){ if(cur) html+='</div></section>'; cur=key; html+='<section class="day"><h2>'+esc(dayLabel(s.t))+'</h2><div class="grid">'; }
+    html+='<figure class="tile'+(s.ok?'':' dead')+'" title="'+esc((s.title||s.tag)+' · '+s.min+' دقيقة')+'"><svg viewBox="20 20 160 160" aria-hidden="true">'+treeMarkup(s.species,1,!s.ok)+'</svg><figcaption><b>'+(s.ok?s.min+' د':'ذبلت')+'</b><span>'+esc(s.tag)+'</span></figcaption></figure>';
+  });
+  body.innerHTML=html+'</div></section>';
+}
+function renderShop(){
+  $('shopGrid').innerHTML=SPECIES.map(function(sp){
+    var owned=S.owned.indexOf(sp.id)>-1, sel=S.selected===sp.id, label, dis=false;
+    if(sel){label='مُختارة';dis=true;}
+    else if(owned){label='اختيار';}
+    else if(S.coins>=sp.price){label='شراء · <svg class="ic-sm" aria-hidden="true"><use href="#i-coin"/></svg> '+sp.price;}
+    else{label='ينقصك '+coinWord(sp.price-S.coins);dis=true;}
+    return '<article class="card'+(sel?' sel':'')+'"><svg viewBox="20 20 160 160" aria-hidden="true">'+treeMarkup(sp.id,1,false)+'</svg><h3>'+sp.name+'</h3><button type="button" class="btn" data-id="'+sp.id+'"'+(dis?' disabled':'')+'>'+label+'</button></article>';
+  }).join('');
+}
+var DAYN=['أحد','إثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'];
+function renderStats(){
+  var ok=S.sessions.filter(function(s){return s.ok;});
+  var days=[],i;
+  for(i=0;i<7;i++){
+    var d=new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate()-(6-i));
+    var n=new Date(d); n.setDate(n.getDate()+1);
+    var a=d.getTime(), b=n.getTime();
+    var m=ok.reduce(function(x,s){return (s.t>=a&&s.t<b)?x+s.min:x;},0);
+    days.push({m:m,label:i===6?'اليوم':DAYN[d.getDay()],now:i===6});
+  }
+  var max=Math.max.apply(null,days.map(function(x){return x.m;}).concat([1]));
+  var week=days.reduce(function(x,y){return x+y.m;},0);
+  var dead=S.sessions.length-ok.length;
+  var byTag={};
+  ok.forEach(function(s){byTag[s.tag]=(byTag[s.tag]||0)+s.min;});
+  var tags=Object.keys(byTag).sort(function(x,y){return byTag[y]-byTag[x];});
+  var tmax=tags.length?byTag[tags[0]]:1;
+  var h='<div class="stats">'+
+    '<div class="stat"><b>'+fmtMin(days[6].m)+'</b><span>تركيز اليوم</span></div>'+
+    '<div class="stat"><b>'+fmtMin(week)+'</b><span>آخر 7 أيام</span></div>'+
+    '<div class="stat"><b>'+ok.length+'</b><span>أشجار نمت</span></div>'+
+    '<div class="stat"><b>'+dead+'</b><span>أشجار ذبلت</span></div></div>';
+  h+='<div class="panel"><h2>دقائق التركيز في آخر 7 أيام</h2><div class="bars">'+days.map(function(x){
+    var px=x.m>0?Math.max(4,Math.round(x.m/max*96)):3;
+    return '<div class="col"><span class="val">'+(x.m>0?x.m:'')+'</span><div class="bar'+(x.m>0?'':' zero')+'" style="height:'+px+'px"></div><span class="day'+(x.now?' now':'')+'">'+x.label+'</span></div>';
+  }).join('')+'</div></div>';
+  h+='<div class="panel"><h2>حسب العلامة</h2>'+(tags.length?'<div class="rows">'+tags.map(function(t){
+    return '<div class="row"><span>'+esc(t)+'</span><div class="track"><div class="fill" style="width:'+Math.max(4,Math.round(byTag[t]/tmax*100))+'%"></div></div><em>'+fmtMin(byTag[t])+'</em></div>';
+  }).join('')+'</div>':'<p class="note">ستظهر هنا بعد أول جلسة ناجحة.</p>')+'</div>';
+  $('statsBody').innerHTML=h;
+}
+function renderAll(){
+  $('coinCount').textContent=S.coins;
+  renderTags(); renderForest(); renderShop(); renderStats();
+}
+
+/* ---------- routing ---------- */
+function show(){
+  var h=(location.hash||'').slice(1);
+  if(VIEWS.indexOf(h)<0) h='focus';
+  if(A) h='focus';
+  VIEWS.forEach(function(v){$('v-'+v).hidden=(v!==h);});
+  Array.prototype.forEach.call(document.querySelectorAll('.tab'),function(a){
+    if(a.getAttribute('data-v')===h) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current');
+  });
+}
+window.addEventListener('hashchange',function(){show();window.scrollTo(0,0);});
+
+/* ---------- events ---------- */
+tagsEl.addEventListener('click',function(e){
+  var b=e.target.closest('button[data-tag]'); if(!b||A) return;
+  S.tag=b.getAttribute('data-tag'); save(); renderTags();
+});
+$('minus').addEventListener('click',function(){if(A) return; S.dur=clamp(S.dur-5,5,120); save(); ui();});
+$('plus').addEventListener('click',function(){if(A) return; S.dur=clamp(S.dur+5,5,120); save(); ui();});
+goBtn.addEventListener('click',function(){
+  if(!A){start();return;}
+  if(Date.now()-A.start<10000){cancelQuiet();return;}
+  if(!confirmGive){
+    confirmGive=true; ui();
+    clearTimeout(confirmT); confirmT=setTimeout(function(){confirmGive=false;ui();},4000);
+  }else{finish(false,'gaveup');}
+});
+$('shopGrid').addEventListener('click',function(e){
+  var b=e.target.closest('button[data-id]'); if(!b||b.disabled) return;
+  var sp=SPECIES.filter(function(x){return x.id===b.getAttribute('data-id');})[0]; if(!sp) return;
+  if(S.owned.indexOf(sp.id)<0){
+    if(S.coins<sp.price) return;
+    S.coins-=sp.price; S.owned.push(sp.id); toast('فتحت شجرة '+sp.name+'.');
+  }
+  S.selected=sp.id; save(); renderAll(); ui();
+});
+$('resNew').addEventListener('click',function(){$('result').hidden=true;goBtn.focus();});
+$('resForest').addEventListener('click',function(){$('result').hidden=true;location.hash='forest';});
+function onHide(){
+  if(!A||hiddenAt) return;
+  hiddenAt=Date.now(); A.lastSeen=hiddenAt; saveActive();
+}
+function onShow(){
+  if(!A||!hiddenAt) return;
+  var away=Date.now()-hiddenAt; hiddenAt=0;
+  if(away>GRACE){finish(false,'left');}
+  else{lock();lastSec=-1;tick();}
+}
+document.addEventListener('visibilitychange',function(){if(document.hidden) onHide(); else onShow();});
+document.addEventListener('pause',onHide);
+document.addEventListener('resume',onShow);
+window.addEventListener('pagehide',onHide);
+
+/* ---------- boot ---------- */
+(function(){
+  try{
+    var a=JSON.parse(localStorage.getItem(AKEY));
+    if(a&&a.start&&a.total&&a.lastSeen) A=a;
+  }catch(e){}
+  renderAll(); ui(); show();
+  if(A){
+    if(Date.now()-A.lastSeen>GRACE){finish(false,'left');}
+    else{lastSec=-1;lock();timer=setInterval(tick,250);tick();ui();}
+  }
+})();
+})();
+</script>
+
+</body>
+</html>
